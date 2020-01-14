@@ -14,8 +14,10 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    #api 는 prefix
+    #세부 url은 weather_api 에서 찾는다.
+    path('api/', include('weather_api.urls')),
 ]
