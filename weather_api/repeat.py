@@ -15,16 +15,16 @@ class worker(Thread):
             field3 =  data["field3"]
             
             soilMoisture = int(field3) / 8
-
+            
             print(soilMoisture)
+            
+            cookies = {'sysauth': 'c03412f3ac67293cb346e0896b52acc9'}
 
             if(soilMoisture < 60):
-                cookies = {'sysauth': 'c03412f3ac67293cb346e0896b52acc9'}
                 trigger_request = requests.get('http://192.168.43.69/arduino/1', cookies=cookies)
                 print(trigger_request, "request ON")
             
             else:
-                cookies = {'sysauth': 'c03412f3ac67293cb346e0896b52acc9'}
                 trigger_request = requests.get('http://192.168.43.69/arduino/0', cookies=cookies)    
                 print(trigger_request, "request Off")
             
