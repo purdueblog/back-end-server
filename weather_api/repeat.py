@@ -14,13 +14,24 @@ class worker(Thread):
             field2 =  data["field2"]
             field3 =  data["field3"]
             
-            soilMoisture = int(field3) / 8
-            
-            print(soilMoisture)
-            
+            soil_moisture = int(field3) / 8
+
+            print(soil_moisture)
+
             cookies = {'sysauth': 'c03412f3ac67293cb346e0896b52acc9'}
 
-            if(soilMoisture < 60):
+            mad = 50
+            if(soil_moisture < mad):
+                depth = 1
+                awc = 0.11
+                net_irr = awc * mad
+                efficiency_of_drip = 80
+                ga = net_irr / efficiency_of_drip
+
+                area = 16
+                flow_rate = 1.6
+                time = (ga * area) / (1.6 * flow_rate)
+
                 trigger_request = requests.get('http://192.168.43.69/arduino/1', cookies=cookies)
                 print(trigger_request, "request ON")
             
