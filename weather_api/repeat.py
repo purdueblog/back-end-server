@@ -9,6 +9,41 @@ import isodate
 
 class sensor_worker(Thread):
     full_time = ""
+    slope = 0.149732
+    # 매개변수 : time만큼 물줄 경우 , return : 올라가는 soil_moisture
+    def up_soil_moisture(self, time):
+        return self.slope * time
+    
+    # 매개변수 : soil_moisture 만큼 올리는대 필요한 시간, return : time  
+    def get_time_using_soil_moisture(self, soil_moisture):
+        return ( soil_moisture ) / self.slope
+    
+    # 매개변수 : day, cycle 성장단계에 따른 필요 물량, return : 물양
+    def need_water_amount(self, day, cycle = 1):
+        return (-0.000025250*(day**3) + 0.003195485*(day**2) + 0.000200062*day +1.143255449) * cycle
+    
+    # 매개변수 : 주고 싶은 물 양, return: 물양을 주는데 필요한 시간.
+    def get_time_using_water(self, water_amount):
+        return water_amount / 1.1 
+    
+    # 매개변수 : time만큼 물을 주면, return: 총 준 물의 양
+    def get_amount_using_time(self, time):
+    		return time * 1.1
+    
+    # 매개변수 : 주고 싶은 물 양, return: 물양을 주고 올라가는 soil_moisture
+    def get_mad_using_water(self, water_amount):
+        return self.up_soil_moisture(self.get_time_using_water(water_amount))
+    
+    # 매개변수 : 토양수분, return MAD 포인트 
+    def convert_soil_moisture_to_MAD(self, soil_moisture):
+        if soil_moisture > 16:
+            return ((34-16) - soil_moisture) / 34 * 100
+        return 100
+    
+    # 매개변수 : MAD , return mad 값에 따른 수분 토양
+    def MAD_convert_to_soilmoisture(self, mad):
+        return (18) * (100 - mad) / 100 + 16
+
     def check_hour(self):
         time_api_url = 'http://worldtimeapi.org/api/timezone/America/Indiana/Indianapolis'
         time_request = requests.get(time_api_url).json()
@@ -44,24 +79,21 @@ class sensor_worker(Thread):
         collection = db["irrigation"]
        
         soil_moisture = float(field3)
+        
+
         if(self.check_hour()):
             print("soil_moisture : ", soil_moisture)
             mad = 30
-            if(soil_moisture < mad):
-                depth = 1.0
-                awc = 0.21
-                net_irr = awc * mad
-                efficiency_of_drip = 80.0
+            limit_moisture = self.MAD_convert_to_soilmoisture(mad)
+            if(soil_moisture < limit_moisture):
                 
-                ga = net_irr / efficiency_of_drip
+                goal_moisture = self.MAD_convert_to_soilmoisture(0)
 
-                area = 0.11
-                flow_rate = 0.8
+                serve_moisture = goal_moisture - soil_moisture
 
-                # time을 분으로 환산
-                irr_time = int(((ga * area) / (1.6 * flow_rate)) * 3600)
+                irr_time = self.get_time_using_soil_moisture(serve_moisture)
 
-                str_irr_time = "0"
+                str_irr_time = str(irr_time)
                 
                 print("set time : ", irr_time)
 
@@ -70,8 +102,9 @@ class sensor_worker(Thread):
                 print(trigger_request, "request ON")
 
                 #insert usage of water to datebase
-                print("time : ", self.full_time)
-                post = {'water' : 100, 'dt' : self.full_time}
+                amout_of_water = self.get_amount_using_time(irr_time)
+                print("water suffly : ", amout_of_water)
+                post = {'water' : amout_of_water, 'dt' : self.full_time}
                 insert_id = collection.insert_one(post).inserted_id
                 print("Irrigation data Inserted !! " , insert_id)
                 print("\n")
@@ -84,7 +117,7 @@ class sensor_worker(Thread):
     def run(self):
         while(True):
             self.irrigation()
-            time.sleep(30)
+            time.sleep(1800)
 
 class weather_worker(Thread):
     def run(self):
