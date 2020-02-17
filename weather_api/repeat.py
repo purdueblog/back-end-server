@@ -55,16 +55,15 @@ class sensor_worker(Thread):
 
         print("hour : " + times[current_hour])
         print("min : " + times[current_min])
-        
-        return True
+    
 
-        if(int(times[current_hour]) == 9 and int(times[current_min]) < 30):
+        if(int(times[current_hour]) == 10  and int(times[current_min]) < 30):
             return True
         else:
             return False
     
     def irrigation(self):
-        cookies = {'sysauth': '87f2cda04e005dc61b8d5c8d81cadb5f'}
+        cookies = {'sysauth': '72d61ae1f2c85c702da1e83587e92724'}
         lora_url = 'https://api.thingspeak.com/channels/970723/feeds.json?api_key=AU0TNWBNLRYXU1QL&results=5'
         lora_request = requests.get(lora_url).json()
         datas = lora_request["feeds"]
@@ -88,13 +87,12 @@ class sensor_worker(Thread):
             if(soil_moisture < limit_moisture):
                 
                 goal_moisture = self.MAD_convert_to_soilmoisture(0)
-
                 serve_moisture = goal_moisture - soil_moisture
 
                 irr_time = self.get_time_using_soil_moisture(serve_moisture)
-
-                str_irr_time = str(irr_time)
                 
+                irr_time = int(irr_time)
+                str_irr_time = str(irr_time)
                 print("set time : ", irr_time)
 
                 trigger_request = requests.get('http://192.168.2.241/arduino/irrigation/' + str_irr_time, cookies=cookies)
@@ -102,7 +100,7 @@ class sensor_worker(Thread):
                 print(trigger_request, "request ON")
 
                 #insert usage of water to datebase
-                amout_of_water = self.get_amount_using_time(irr_time)
+                amout_of_water = self.get_amount_using_time(irr_time) * 4 
                 print("water suffly : ", amout_of_water)
                 post = {'water' : amout_of_water, 'dt' : self.full_time}
                 insert_id = collection.insert_one(post).inserted_id
