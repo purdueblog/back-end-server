@@ -10,6 +10,7 @@ import isodate
 class sensor_worker(Thread):
     full_time = ""
     slope = 0.149732
+    cluster = None
     # 매개변수 : time만큼 물줄 경우 , return : 올라가는 soil_moisture
     def up_soil_moisture(self, time):
         return self.slope * time
@@ -56,14 +57,50 @@ class sensor_worker(Thread):
         print("hour : " + times[current_hour])
         print("min : " + times[current_min])
     
+        return True
 
         if(int(times[current_hour]) == 10  and int(times[current_min]) < 30):
             return True
         else:
             return False
     
+    def get_today_rainfall(self):
+        current_time = self.full_time[0:10]
+        times = current_time.split('-')
+        year_index = 0
+        month_index = 1
+        day_index = 2
+
+        # get today date
+        year = int(times[year_index])
+        month = int(times[month_index])
+        day = int(times[day_index])
+
+        db = self.cluster["weather"]
+        collection = db["weather"]
+
+        # get data by range
+        start = datetime.datetime(year, month, day, 0, 0)
+        end = datetime.datetime(year, month, day, 23, 59)
+        resuslt = collection.find({'dt': {'$lt': end, '$gte': start}})
+
+        index = 0
+        today_rainfall = 0
+
+        # sum of today rainfall
+        while(True):
+            try:
+                resuslt[index]
+            except IndexError:
+                break
+            today_rainfall += resuslt[index]['rainfall']
+            index += 1
+
+        print("today_rainfall : ", today_rainfall)
+        return today_rainfall
+
     def irrigation(self):
-        cookies = {'sysauth': '72d61ae1f2c85c702da1e83587e92724'}
+        cookies = {'sysauth': '01fedfb4bd0d0220aec7270d389fa728'}
         lora_url = 'https://api.thingspeak.com/channels/970723/feeds.json?api_key=AU0TNWBNLRYXU1QL&results=5'
         lora_request = requests.get(lora_url).json()
         datas = lora_request["feeds"]
@@ -73,8 +110,8 @@ class sensor_worker(Thread):
         field2 =  data["field2"]
         field3 =  data["field3"]
 
-        cluster = MongoClient("mongodb+srv://myungwoo:didhk7339@cluster0-hrdwg.mongodb.net/test?retryWrites=true&w=majority")
-        db = cluster["irrigation"]
+        self.cluster = MongoClient("mongodb+srv://myungwoo:didhk7339@cluster0-hrdwg.mongodb.net/test?retryWrites=true&w=majority")
+        db = self.cluster["irrigation"]
         collection = db["irrigation"]
        
         soil_moisture = float(field3)
@@ -84,6 +121,8 @@ class sensor_worker(Thread):
             print("soil_moisture : ", soil_moisture)
             mad = 30
             limit_moisture = self.MAD_convert_to_soilmoisture(mad)
+
+            # check limit of soil moisture
             if(soil_moisture < limit_moisture):
                 
                 goal_moisture = self.MAD_convert_to_soilmoisture(0)
@@ -95,17 +134,26 @@ class sensor_worker(Thread):
                 str_irr_time = str(irr_time)
                 print("set time : ", irr_time)
 
-                trigger_request = requests.get('http://192.168.2.241/arduino/irrigation/' + str_irr_time, cookies=cookies)
-                print('http://192.168.2.241/arduino/irrigation/' + str_irr_time)
-                print(trigger_request, "request ON")
 
-                #insert usage of water to datebase
+                # calcaulate today rainfall
+                today_rainfall = self.get_today_rainfall()
                 amout_of_water = self.get_amount_using_time(irr_time) * 4 
                 print("water suffly : ", amout_of_water)
-                post = {'water' : amout_of_water, 'dt' : self.full_time}
-                insert_id = collection.insert_one(post).inserted_id
-                print("Irrigation data Inserted !! " , insert_id)
-                print("\n")
+
+                # compare today rainfall and amount of required water
+                if today_rainfall > amout_of_water:
+                    print("Not irrigation, because of today rainfall\n")
+                else:
+                    trigger_request = requests.get('http://192.168.2.241/arduino/irrigation/' + str_irr_time, cookies=cookies)
+                    print('http://192.168.2.241/arduino/irrigation/' + str_irr_time)
+                    print(trigger_request, "request ON")
+
+                    #insert usage of water to datebase
+                    
+                    post = {'water' : amout_of_water, 'dt' : self.full_time}
+                    insert_id = collection.insert_one(post).inserted_id
+                    print("Irrigation data Inserted !! " , insert_id)
+                    print("\n")
                 
         else:
             trigger_request = requests.get('http://192.168.2.241/arduino/irrigation/0', cookies=cookies)
