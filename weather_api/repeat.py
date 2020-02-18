@@ -160,12 +160,16 @@ class sensor_worker(Thread):
                         print("\n")
                     else:
                         print("Irrigation Trigger response Error\n\n")
-                
-        else:
-            trigger_request = requests.get('http://192.168.2.241/arduino/irrigation/0', cookies=cookies)
-            print("soil_moisture : ", soil_moisture)
-            print(trigger_request, "request OFF")
-            print("\n")
+                    
+                    # avoid off request
+                    return
+        
+        # excute for cookie value
+        trigger_request = requests.get('http://192.168.2.241/arduino/irrigation/0', cookies=cookies)
+        print("soil_moisture : ", soil_moisture)
+        print(trigger_request, "request OFF")
+        print("\n")
+
     def run(self):
         while(True):
             self.irrigation()
