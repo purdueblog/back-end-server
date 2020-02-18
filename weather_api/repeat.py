@@ -87,7 +87,7 @@ class sensor_worker(Thread):
         index = 0
         today_rainfall = 0
 
-        # sum of today rainfall
+        # show the data 
         while(True):
             try:
                 resuslt[index]
@@ -150,7 +150,8 @@ class sensor_worker(Thread):
 
                     #insert usage of water to datebase
                     
-                    post = {'water' : amout_of_water, 'dt' : self.full_time}
+                    current_isodate = isodate.parse_datetime(self.full_time)
+                    post = {'water' : amout_of_water, 'dt' : current_isodate}
                     insert_id = collection.insert_one(post).inserted_id
                     print("Irrigation data Inserted !! " , insert_id)
                     print("\n")
