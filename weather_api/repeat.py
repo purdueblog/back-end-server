@@ -145,16 +145,21 @@ class sensor_worker(Thread):
                     print("Not irrigation, because of today rainfall\n")
                 else:
                     trigger_request = requests.get('http://192.168.2.241/arduino/irrigation/' + str_irr_time, cookies=cookies)
-                    print('http://192.168.2.241/arduino/irrigation/' + str_irr_time)
-                    print(trigger_request, "request ON")
-
-                    #insert usage of water to datebase
                     
-                    current_isodate = isodate.parse_datetime(self.full_time)
-                    post = {'water' : amout_of_water, 'dt' : current_isodate}
-                    insert_id = collection.insert_one(post).inserted_id
-                    print("Irrigation data Inserted !! " , insert_id)
-                    print("\n")
+                    # success
+                    if trigger_request.status_code == 200:
+                        print('http://192.168.2.241/arduino/irrigation/' + str_irr_time)
+                        print(trigger_request, "request ON")
+                        
+                        #insert usage of water to datebase
+                        
+                        current_isodate = isodate.parse_datetime(self.full_time)
+                        post = {'water' : amout_of_water, 'dt' : current_isodate}
+                        insert_id = collection.insert_one(post).inserted_id
+                        print("Irrigation data Inserted !! " , insert_id)
+                        print("\n")
+                    else:
+                        print("Irrigation Trigger response Error\n\n")
                 
         else:
             trigger_request = requests.get('http://192.168.2.241/arduino/irrigation/0', cookies=cookies)
