@@ -100,7 +100,7 @@ class sensor_worker(Thread):
         return today_rainfall
 
     def irrigation(self):
-        cookies = {'sysauth': '01fedfb4bd0d0220aec7270d389fa728'}
+        cookies = {'sysauth': '0aa307697d77c3a07af012e0a10c0c1a'}
         lora_url = 'https://api.thingspeak.com/channels/970723/feeds.json?api_key=AU0TNWBNLRYXU1QL&results=5'
         lora_request = requests.get(lora_url).json()
         datas = lora_request["feeds"]
