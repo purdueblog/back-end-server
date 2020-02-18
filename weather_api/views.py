@@ -60,17 +60,17 @@ class IrrigationApi(APIView):
             result = self.fetch_data(year, start_date, end_date)
 
             print(result)
-        
-            day_list = [0] * 5
+
             day_length = 5
+            day_list = [0] * day_length
 
             # make list about day
             for i in range(day_length):
                 day_list[i] = int(data[str(i)].split("/")[day_index])
 
-            water_of_days = [0] * 5
+            water_of_days = [0] * day_length
             index = 0
-            
+
             # make list about total amout of irrigation water
             while(True):
                 try:
@@ -84,7 +84,7 @@ class IrrigationApi(APIView):
                 index += 1
     
 
-        return Response({'message' : "hello"})
+        return Response({'waters' : water_of_days})
 
 
         
