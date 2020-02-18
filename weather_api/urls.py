@@ -7,4 +7,4 @@ urlpatterns = [
     path('irrigation', views.IrrigationApi.as_view()),
 ]
 
-# repeat.one_time_startup()
+repeat.one_time_startup()

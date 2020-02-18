@@ -119,7 +119,7 @@ class sensor_worker(Thread):
 
         if(self.check_hour()):
             print("soil_moisture : ", soil_moisture)
-            mad = 30
+            mad = 50
             limit_moisture = self.MAD_convert_to_soilmoisture(mad)
 
             # check limit of soil moisture
@@ -155,6 +155,7 @@ class sensor_worker(Thread):
                         
                         current_isodate = isodate.parse_datetime(self.full_time)
                         post = {'water' : amout_of_water, 'dt' : current_isodate}
+                        print(post)
                         insert_id = collection.insert_one(post).inserted_id
                         print("Irrigation data Inserted !! " , insert_id)
                         print("\n")
