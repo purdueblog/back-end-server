@@ -1,7 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from weather_api.api_id import api_id
-from background_task import background
 import requests
 from pymongo import MongoClient
 import datetime
@@ -13,8 +12,6 @@ class WeatherApi(APIView):
         return Response({'message' : "weatehr_request"})
 
 class IrrigationApi(APIView):
-
-
     def get_index(self, days, today):
         for i in range(len(days)):
             if(days[i] == today):
@@ -36,7 +33,6 @@ class IrrigationApi(APIView):
         # fetch irrigation data by range
         result = collection.find({'dt': {'$lt': end, '$gte': start}})
         return result
-
     
     def get(self, request, format=None):
         start_day_key = '0'

@@ -123,7 +123,7 @@ class sensor_worker(Thread):
             limit_moisture = self.MAD_convert_to_soilmoisture(mad)
 
             # check limit of soil moisture
-            if(soil_moisture < limit_moisture):
+            if(True):
                 
                 goal_moisture = self.MAD_convert_to_soilmoisture(0)
                 serve_moisture = goal_moisture - soil_moisture
@@ -144,6 +144,7 @@ class sensor_worker(Thread):
                 if today_rainfall > amout_of_water:
                     print("Not irrigation, because of today rainfall\n")
                 else:
+                    str_irr_time = "0"
                     trigger_request = requests.get('http://192.168.2.241/arduino/irrigation/' + str_irr_time, cookies=cookies)
                     
                     # success
