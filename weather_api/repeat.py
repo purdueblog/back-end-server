@@ -6,6 +6,7 @@ from pprint import pprint
 from weather_api.api_id import api_id
 import datetime
 import isodate
+from weather_api.cookie import cookies
 
 class sensor_worker(Thread):
     full_time = ""
@@ -100,7 +101,6 @@ class sensor_worker(Thread):
         return today_rainfall
 
     def irrigation(self):
-        cookies = {'sysauth': '0aa307697d77c3a07af012e0a10c0c1a'}
         lora_url = 'https://api.thingspeak.com/channels/970723/feeds.json?api_key=AU0TNWBNLRYXU1QL&results=5'
         lora_request = requests.get(lora_url).json()
         datas = lora_request["feeds"]
@@ -206,6 +206,34 @@ class weather_worker(Thread):
 
             time.sleep(3600)
 
+class flush_worker(Thread):
+    def run(self):
+        # connect to weather collection
+        cluster = MongoClient("mongodb+srv://myungwoo:didhk7339@cluster0-hrdwg.mongodb.net/test?retryWrites=true&w=majority")
+        db = cluster["irrigation_time"]
+        collection = db["irrigation_time"]
+
+        while(True):
+            # if there is irrigaiton request 
+            if(collection.count() > 0):
+                result = collection.find_one()
+                get_time = result['time'] 
+
+                # irrigaiton !
+                # cookies = {'sysauth': '0aa307697d77c3a07af012e0a10c0c1a'}
+                trigger_request = requests.get('http://192.168.2.241/arduino/irrigation/' + get_time, cookies=cookies)
+                collection.delete_many({})
+                if trigger_request.status_code == 200:
+                    print('http://192.168.2.241/arduino/irrigation/' + get_time)
+                    print("Irrigation!!")
+                    print(cookies)
+                else:
+                    print("flush reqeust Error!!")
+            else:
+                print("flush_worker is working")
+            time.sleep(3)
+
 def one_time_startup():
     sensor_worker().start()
     weather_worker().start()
+    flush_worker().start()
