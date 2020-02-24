@@ -4,3 +4,4 @@ django-cors-headers==3.2.1
 pymongo==3.10.1
 requests==2.23.0 
 django-background-tasks==1.2.5 
+whitenoise===5.0.1
