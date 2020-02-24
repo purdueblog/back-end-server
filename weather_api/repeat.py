@@ -124,7 +124,7 @@ class sensor_worker(Thread):
             limit_moisture = self.MAD_convert_to_soilmoisture(mad)
 
             # check limit of soil moisture
-            if(True):
+            if(limit_moisture > soil_moisture):
                 
                 goal_moisture = self.MAD_convert_to_soilmoisture(0)
                 serve_moisture = goal_moisture - soil_moisture
