@@ -7,6 +7,7 @@ from weather_api.api_id import api_id
 import datetime
 import isodate
 from weather_api.cookie import cookies
+import weather_api.current_time as curret_time_script
 
 class sensor_worker(Thread):
     full_time = ""
@@ -144,7 +145,6 @@ class sensor_worker(Thread):
                 if today_rainfall > amout_of_water:
                     print("Not irrigation, because of today rainfall\n")
                 else:
-                    str_irr_time = "0"
                     trigger_request = requests.get('http://192.168.2.241/arduino/irrigation/' + str_irr_time, cookies=cookies)
                     
                     # success
@@ -154,7 +154,7 @@ class sensor_worker(Thread):
                         
                         #insert usage of water to datebase
                         
-                        current_isodate = isodate.parse_datetime(self.full_time)
+                        current_isodate = curret_time_script.get_iso_current_time()
                         post = {'water' : amout_of_water, 'dt' : current_isodate}
                         print(post)
                         insert_id = collection.insert_one(post).inserted_id
@@ -199,7 +199,7 @@ class weather_worker(Thread):
                 time_request = requests.get(time_api_url).json()
                 full_time = time_request['datetime']
             
-                current_isodate = isodate.parse_datetime(full_time)
+                current_isodate = curret_time_script.get_iso_current_time()
                 post = {'rainfall' : rainfall, 'dt' : current_isodate}
                 new_id = collection.insert_one(post).inserted_id
                 print("Rain data inserted!!  ", new_id)
